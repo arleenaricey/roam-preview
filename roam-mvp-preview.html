@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>roam — MVP wireframe</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#F5F3FA;font-family:'DM Mono',monospace;}
+  ::-webkit-scrollbar{width:0;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+const c = {
+  bg:"#F5F3FA", surface:"rgba(255,255,255,0.96)",
+  lavender:"#DFDDF2", lavenderDeep:"#C9C5E8",
+  logan:"#ABA1C6", loganDeep:"#7B6FA8", loganDark:"#4A4070",
+  pink:"#FADCE4", pinkDeep:"#F2B8CB",
+  text:"#1E1A2E", textMid:"#6B6480", textMuted:"#A89FC0",
+  greenDot:"#72B97A", green:"#D4EDDA", greenDeep:"#4A9E54",
+};
+
+const css = `
+  .si{font-family:'DM Serif Display',serif;font-style:italic;}
+  .s{font-family:'DM Serif Display',serif;}
+  .mono{font-family:'DM Mono',monospace;}
+  .li{font-family:'Lora',serif;font-style:italic;}
+  @keyframes fu{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+  .fu{animation:fu .35s ease both}
+  .d1{animation-delay:.06s}.d2{animation-delay:.12s}.d3{animation-delay:.18s}
+  .d4{animation-delay:.24s}.d5{animation-delay:.30s}.d6{animation-delay:.36s}
+  .card{background:${c.surface};border:1px solid rgba(171,161,198,0.2);border-radius:16px;box-shadow:0 2px 18px rgba(74,64,112,0.07),0 1px 3px rgba(74,64,112,0.04);}
+  .pill{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.8px;text-transform:uppercase;}
+  .tab-seg{flex:1;padding:7px 0;border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;transition:all .2s;}
+  .btn-main{width:100%;padding:13px;background:linear-gradient(135deg,${c.loganDeep},${c.loganDark});color:white;border:none;border-radius:13px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;cursor:pointer;box-shadow:0 4px 18px rgba(74,64,112,0.25);}
+  .btn-ghost{padding:10px 16px;background:none;border:1px solid rgba(171,161,198,0.35);border-radius:12px;cursor:pointer;font-family:'DM Mono',monospace;font-size:9px;color:${c.textMid};letter-spacing:1px;}
+  .btn-danger{padding:6px 12px;background:rgba(242,184,203,0.25);border:1px solid rgba(242,184,203,0.5);border-radius:8px;cursor:pointer;font-family:'DM Mono',monospace;font-size:8px;color:#C0506A;letter-spacing:1px;}
+  .btn-soft{padding:6px 12px;background:rgba(223,221,242,0.5);border:1px solid rgba(171,161,198,0.3);border-radius:8px;cursor:pointer;font-family:'DM Mono',monospace;font-size:8px;color:${c.loganDark};letter-spacing:1px;}
+  input::placeholder{color:${c.textMuted};}input:focus{outline:none;}
+  .navbtn{background:none;border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:8px;letter-spacing:2px;text-transform:uppercase;padding-bottom:2px;transition:all .2s;}
+`;
+
+const DotGrid = ({op=0.28}) => (
+  <svg style={{position:"absolute",inset:0,width:"100%",height:"100%",opacity:op,pointerEvents:"none",zIndex:0}}>
+    <defs><pattern id="dp" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r=".8" fill={c.logan}/>
+    </pattern></defs>
+    <rect width="100%" height="100%" fill="url(#dp)"/>
+  </svg>
+);
+
+const Av = ({l,size=24,i=0}) => (
+  <div style={{width:size,height:size,borderRadius:"50%",background:`linear-gradient(135deg,${c.loganDeep},${c.loganDark})`,border:"2px solid white",display:"flex",alignItems:"center",justifyContent:"center",marginLeft:i>0?-(size*.28):0,position:"relative",zIndex:10-i,fontSize:size*.38,color:"white",fontFamily:"'DM Mono',monospace",flexShrink:0}}>{l}</div>
+);
+
+const StatusBar = () => (
+  <div style={{padding:"16px 24px 6px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"relative",zIndex:2}}>
+    <span className="mono" style={{fontSize:11,color:c.textMuted}}>9:41</span>
+    <div style={{display:"flex",gap:4,alignItems:"center"}}>
+      {[3,4,5].map((h,i)=><div key={i} style={{width:2.5,height:h*2,background:c.logan,borderRadius:2}}/>)}
+    </div>
+  </div>
+);
+
+const CommandBar = ({placeholder="what are we doing...",onTap}) => (
+  <div style={{padding:"8px 18px 12px",borderTop:`1px solid rgba(171,161,198,0.16)`,background:`rgba(245,243,250,0.96)`,backdropFilter:"blur(16px)",position:"relative",zIndex:3}}>
+    <div className="mono" style={{fontSize:7,color:c.textMuted,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>◌ plan something</div>
+    <div style={{display:"flex",gap:8,alignItems:"center",background:c.surface,border:`1px solid rgba(171,161,198,0.28)`,borderRadius:22,padding:"8px 10px 8px 16px",boxShadow:"0 2px 14px rgba(74,64,112,0.07)"}}>
+      <input readOnly placeholder={placeholder} onClick={onTap} style={{flex:1,background:"none",border:"none",fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:12.5,color:c.textMid,cursor:"pointer"}}/>
+      <div onClick={onTap} style={{width:32,height:32,background:`linear-gradient(135deg,${c.loganDeep},${c.loganDark})`,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0,boxShadow:`0 3px 10px rgba(74,64,112,0.28)`}}>
+        <span style={{color:"white",fontSize:13}}>↑</span>
+      </div>
+    </div>
+  </div>
+);
+
+const TabBar = ({screen,setScreen}) => (
+  <div style={{display:"flex",justifyContent:"space-around",alignItems:"center",padding:"9px 0 20px",background:`rgba(245,243,250,0.96)`,backdropFilter:"blur(16px)",borderTop:`1px solid rgba(171,161,198,0.16)`,position:"relative",zIndex:2}}>
+    {[{id:"home",sym:"◌",label:"home"},{id:"plans",sym:"⊟",label:"plans"},{id:"notifs",sym:"◎",label:"inbox"},{id:"profile",sym:"⊕",label:"profile"}].map(t=>(
+      <button key={t.id} onClick={()=>setScreen(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:screen===t.id?c.loganDark:c.textMuted,transition:"color .2s",padding:"0 10px"}}>
+        <span style={{fontSize:17}}>{t.sym}</span>
+        <span className="mono" style={{fontSize:7.5,letterSpacing:2,textTransform:"uppercase"}}>{t.label}</span>
+        {screen===t.id&&<div style={{width:3,height:3,borderRadius:"50%",background:c.loganDark}}/>}
+      </button>
+    ))}
+  </div>
+);
+
+const HomeScreen = ({setScreen}) => (
+  <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <div style={{padding:"4px 24px 14px",position:"relative",zIndex:2}}>
+      <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between"}}>
+        <div style={{display:"flex",alignItems:"baseline",gap:8}}>
+          <span className="si" style={{fontSize:26,color:c.text}}>roam</span>
+          <span className="mono" style={{fontSize:7,color:c.textMuted,letterSpacing:3,textTransform:"uppercase"}}>beta</span>
+        </div>
+        <div style={{position:"relative",cursor:"pointer"}} onClick={()=>setScreen("notifs")}>
+          <span style={{fontSize:17}}>◎</span>
+          <div style={{position:"absolute",top:-3,right:-3,width:8,height:8,borderRadius:"50%",background:c.pinkDeep,border:"1.5px solid white"}}/>
+        </div>
+      </div>
+      <div className="mono" style={{fontSize:8,color:c.textMuted,letterSpacing:.8,marginTop:1}}>fri · mar 07 · new york</div>
+    </div>
+    <div style={{flex:1,overflowY:"auto",padding:"0 18px",display:"flex",flexDirection:"column",gap:11,position:"relative",zIndex:2}}>
+      <div className="fu d1" style={{background:`linear-gradient(130deg,${c.lavender},${c.pink})`,border:`1px solid rgba(171,161,198,0.28)`,borderRadius:20,padding:"16px 18px",position:"relative",overflow:"hidden",cursor:"pointer"}} onClick={()=>setScreen("plandetail")}>
+        <DotGrid op={0.18}/>
+        <div style={{position:"relative",zIndex:1}}>
+          <div className="mono" style={{fontSize:7,color:c.loganDeep,letterSpacing:2,textTransform:"uppercase",marginBottom:7}}>next up · tap to manage</div>
+          <div className="si" style={{fontSize:22,color:c.text,marginBottom:6}}>MET Museum</div>
+          <div className="mono" style={{fontSize:10,color:c.loganDark,marginBottom:10}}>fri mar 14 · 6:00 pm</div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div style={{display:"flex"}}>{["T","D","A"].map((l,i)=><Av key={i} l={l} size={26} i={i}/>)}</div>
+            <div style={{display:"flex",gap:6}}>
+              <span className="pill" style={{background:"rgba(255,255,255,0.65)",color:c.loganDark}}>1 pending</span>
+              <span className="pill" style={{background:c.pinkDeep,color:"white"}}>task</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="fu d2" style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <span className="mono" style={{fontSize:7.5,color:c.textMuted,letterSpacing:2,textTransform:"uppercase"}}>upcoming</span>
+        <span className="mono" style={{fontSize:7.5,color:c.loganDeep,letterSpacing:1,cursor:"pointer"}} onClick={()=>setScreen("plans")}>see all →</span>
+      </div>
+      {[{name:"Lucali Pizza",month:"MAR",day:"20",time:"7:30 pm",who:["A","M"],accent:c.pink},{name:"Prospect Park",month:"MAR",day:"22",time:"2:00 pm",who:["T","D","A","M"],accent:c.lavender}].map((p,i)=>(
+        <div key={i} className={`card fu d${i+3}`} style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12,cursor:"pointer"}} onClick={()=>setScreen("plandetail")}>
+          <div style={{width:44,height:48,borderRadius:10,background:p.accent,border:`1px solid rgba(171,161,198,0.2)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <div className="mono" style={{fontSize:6.5,color:c.textMid,letterSpacing:1.5,textTransform:"uppercase"}}>{p.month}</div>
+            <div className="s" style={{fontSize:20,color:c.loganDark,lineHeight:1.1}}>{p.day}</div>
+          </div>
+          <div style={{flex:1,minWidth:0}}>
+            <div className="li" style={{fontSize:14,color:c.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</div>
+            <div className="mono" style={{fontSize:8.5,color:c.textMuted,marginTop:2}}>◷ {p.time}</div>
+            <div style={{display:"flex",marginTop:6}}>{p.who.map((l,j)=><Av key={j} l={l} size={20} i={j}/>)}</div>
+          </div>
+          <div style={{width:7,height:7,borderRadius:"50%",background:c.greenDot,flexShrink:0}}/>
+        </div>
+      ))}
+      <div style={{height:8}}/>
+    </div>
+    <CommandBar onTap={()=>setScreen("newplan")}/>
+    <TabBar screen="home" setScreen={setScreen}/>
+  </div>
+);
+
+const PlanDetailScreen = ({setScreen}) => {
+  const [people,setPeople] = useState([
+    {l:"T",name:"@tyler",status:"accepted",dot:c.greenDot},
+    {l:"D",name:"@diya",status:"pending · buy tickets",dot:c.pinkDeep},
+    {l:"M",name:"@meow",status:"pending",dot:c.textMuted},
+    {l:"A",name:"@you",status:"organizer",dot:c.loganDeep},
+  ]);
+  const [chatVal,setChatVal] = useState("");
+  const [chatLog,setChatLog] = useState([]);
+  const removePerson = (name) => {
+    setPeople(p=>p.filter(x=>x.name!==name));
+    setChatLog(l=>[...l,{role:"user",text:`take ${name} off`},{role:"bot",text:`done — ${name} removed and notified.`}]);
+  };
+  return (
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div style={{padding:"4px 24px 0",display:"flex",alignItems:"center",gap:10,position:"relative",zIndex:2}}>
+        <button onClick={()=>setScreen("home")} style={{background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Mono',monospace",fontSize:11,color:c.textMuted}}>← back</button>
+        <div style={{flex:1}}/>
+        <span className="mono" style={{fontSize:8,color:c.textMuted,letterSpacing:2,textTransform:"uppercase"}}>plan detail</span>
+      </div>
+      <div style={{flex:1,overflowY:"auto",position:"relative",zIndex:2}}>
+        <div style={{margin:"10px 18px 0",borderRadius:20,background:`linear-gradient(140deg,${c.lavender},${c.pink})`,padding:"18px 20px",position:"relative",overflow:"hidden"}}>
+          <DotGrid op={0.18}/>
+          <div style={{position:"relative",zIndex:1}}>
+            <div className="mono" style={{fontSize:7,color:c.loganDeep,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>confirmed</div>
+            <div className="si" style={{fontSize:24,color:c.text,marginBottom:5}}>MET Museum</div>
+            <div className="mono" style={{fontSize:10,color:c.loganDark,marginBottom:12}}>fri mar 14 · 6:00 pm</div>
+            <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
+              <button className="btn-soft">✎ edit time</button>
+              <button className="btn-soft">+ add person</button>
+              <button style={{padding:"6px 12px",background:"rgba(255,255,255,0.5)",border:`1px solid rgba(171,161,198,0.3)`,borderRadius:8,cursor:"pointer",fontFamily:"'DM Mono',monospace",fontSize:8,color:c.loganDark,letterSpacing:1}}>📅 add to cal</button>
+            </div>
+          </div>
+        </div>
+        <div style={{padding:"14px 18px",display:"flex",flexDirection:"column",gap:12}}>
+          <div className="card" style={{padding:"14px 16px"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+              <div className="mono" style={{fontSize:7,color:c.textMuted,letterSpacing:2,textTransform:"uppercase"}}>attending</div>
+              <button className="btn-soft" style={{padding:"4px 10px",fontSize:"7.5px"}}>+ invite</button>
+            </div>
+            {people.map((p,i)=>(
+              <div key={p.name} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:i<people.length-1?`1px solid rgba(171,161,198,0.12)`:"none"}}>
+                <div style={{width:7,height:7,borderRadius:"50%",background:p.dot,flexShrink:0}}/>
+                <Av l={p.l} size={28}/>
+                <div style={{flex:1}}>
+                  <div className="li" style={{fontSize:13,color:c.text}}>{p.name}</div>
+                  <div className="mono" style={{fontSize:8,color:c.textMuted,marginTop:1}}>{p.status}</div>
+                </div>
+                {p.name!=="@you"&&<button className="btn-danger" onClick={()=>removePerson(p.name)}>remove</button>}
+              </div>
+            ))}
+          </div>
+          <div style={{background:`rgba(223,221,242,0.3)`,border:`1px dashed rgba(171,161,198,0.4)`,borderRadius:14,padding:"12px 14px"}}>
+            <div className="mono" style={{fontSize:7,color:c.textMuted,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>share link · sms sent</div>
+            <div className="mono" style={{fontSize:11,color:c.loganDark}}>roam.app/join/met-mar14-x7k2</div>
+            <div className="mono" style={{fontSize:8,color:c.textMuted,marginTop:3}}>non-app users can rsvp in browser</div>
+          </div>
+          {chatLog.length>0&&(
+            <div>
+              <div className="mono" style={{fontSize:7,color:c.textMuted,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>recent edits</div>
+              {chatLog.map((m,i)=>(
+                <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start",marginBottom:7}}>
+                  <div style={{background:m.role==="user"?`linear-gradient(135deg,${c.loganDeep},${c.loganDark})`:`rgba(223,221,242,0.5)`,color:m.role==="user"?"white":c.textMid,border:m.role==="bot"?`1px solid rgba(171,161,198,0.25)`:"none",borderRadius:m.role==="user"?"14px 14px 4px 14px":"4px 14px 14px 14px",padding:"8px 12px",maxWidth:"80%",fontFamily:"'DM Mono',monospace",fontSize:10.5,lineHeight:1.5}}>{m.text}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      <div style={{padding:"8px 18px 12px",borderTop:`1px solid rgba(171,161,198,0.16)`,background:`rgba(245,243,250,0.96)`,backdropFilter:"blur(16px)",position:"relative",zIndex:3}}>
+        <div className="mono" style={{fontSize:7,color:c.textMuted,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>◌ manage this plan</div>
+        <div style={{display:"flex",gap:8,alignItems:"center",background:c.surface,border:`1px solid rgba(171,161,198,0.28)`,borderRadius:22,padding:"8px 10px 8px 16px",boxShadow:"0 2px 14px rgba(74,64,112,0.07)"}}>
+          <input value={chatVal} onChange={e=>setChatVal(e.target.value)} placeholder={`"take @meow off" or "change to 7pm"`} style={{flex:1,background:"none",border:"none",fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:12,color:c.textMid}}/>
+          <div onClick={()=>{if(!chatVal.trim())return;setChatLog(l=>[...l,{role:"user",text:chatVal},{role:"bot",text:"got it, updating the plan..."}]);setChatVal("");}} style={{width:32,height:32,background:`linear-gradient(135deg,${c.loganDeep},${c.loganDark})`,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0,boxShadow:`0 3px 10px rgba(74,64,112,0.28)`}}>
+            <span style={{color:"white",fontSize:13}}>↑</span>
+          </div>
+        </div>
+      </div>
+      <TabBar screen="plans" setScreen={setScreen}/>
+    </div>
+  );
+};
+
+const WebInvitePage = ({setScreen}) => {
+  const [rsvp,setRsvp] = useState(null);
+  return (
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div style={{background:"rgba(240,238,248,0.98)",padding:"10px 14px 8px",borderBottom:`1px solid rgba(171,161,198,0.2)`,position:"relative",zIndex:2}}>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <div style={{display:"flex",gap:4}}>{[c.pinkDeep,"#F5C842",c.greenDot].map((col,i)=><div key={i} style={{width:8,height:8,borderRadius:"50%",background:col,opacity:.7}}/>)}</div>
+          <div style={{flex:1,background:"rgba(255,255,255,0.8)",borderRadius:8,padding:"4px 10px",border:`1px solid rgba(171,161,198,0.25)`}}>
+            <span className="mono" style={{fontSize:9,color:c.textMuted}}>roam.app/join/met-mar14-x7k2</span>
+          </div>
+        </div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",position:"relative",zIndex:2}}>
+        <div style={{background:`linear-gradient(150deg,${c.lavender},${c.pink})`,padding:"36px 28px 28px",position:"relative",overflow:"hidden"}}>
+          <DotGrid op={0.18}/>
+          <div style={{position:"relative",zIndex:1}}>
+            <div className="mono" style={{fontSize:7,color:c.loganDeep,letterSpacing:3,textTransform:"uppercase",marginBottom:10}}>you're invited</div>
+            <div className="si" style={{fontSize:32,color:c.text,lineHeight:1.1,marginBottom:8}}>MET Museum</div>
+            <div style={{display:"flex",gap:18,marginBottom:14}}>
+              <div><div className="mono" style={{fontSize:7,color:c.textMuted,letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>when</div><div className="mono" style={{fontSize:11,color:c.loganDark}}>fri mar 14 · 6:00 pm</div></div>
+              <div><div className="mono" style={{fontSize:7,color:c.textMuted,letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>from</div><div className="mono" style={{fontSize:11,color:c.loganDark}}>@arleen</div></div>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{display:"flex"}}>{["A","T"].map((l,i)=><Av key={i} l={l} size={26} i={i}/>)}</div>
+              <span className="mono" style={{fontSize:9,color:c.loganDark}}>tyler already accepted</span>
+            </div>
+          </div>
+        </div>
+        <div style={{padding:"22px 24px",display:"flex",flexDirection:"column",gap:16}}>
+          <div style={{background:`rgba(242,184,203,0.2)`,border:`1px solid rgba(242,184,203,0.5)`,borderRadius:12,padding:"12px 14px",display:"flex",gap:10,alignItems:"flex-start"}}>
+            <span style={{fontSize:16}}>◈</span>
+            <div>
+              <div className="mono" style={{fontSize:8,color:"#C0506A",letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>you have a task</div>
+              <div className="li" style={{fontSize:13,color:c.text}}>Arleen asked you to buy the tickets</div>
+            </div>
+          </div>
+          {!rsvp?(
+            <div>
+              <div className="mono" style={{fontSize:8,color:c.textMuted,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>your rsvp</div>
+              <div style={{display:"flex",gap:10}}>
+                <button onClick={()=>setRsvp("yes")} style={{flex:1,padding:"14px",background:`linear-gradient(135deg,${c.greenDot},${c.greenDeep})`,color:"white",border:"none",borderRadius:13,fontFamily:"'DM Mono',monospace",fontSize:10,letterSpacing:2,textTransform:"uppercase",cursor:"pointer",boxShadow:`0 4px 16px rgba(74,158,84,0.3)`}}>✓ i'm in</button>
+                <button onClick={()=>setRsvp("no")} style={{flex:1,padding:"14px",background:"none",color:c.textMid,border:`1px solid rgba(171,161,198,0.35)`,borderRadius:13,fontFamily:"'DM Mono',monospace",fontSize:10,letterSpacing:2,textTransform:"uppercase",cursor:"pointer"}}>✕ can't go</button>
+              </div>
+            </div>
+          ):(
+            <div className="fu" style={{textAlign:"center",padding:"10px 0"}}>
+              {rsvp==="yes"?(
+                <div>
+                  <div style={{fontSize:32,marginBottom:8}}>🎉</div>
+                  <div className="si" style={{fontSize:20,color:c.text,marginBottom:4}}>you're going!</div>
+                  <div className="mono" style={{fontSize:9,color:c.textMuted,marginBottom:16}}>arleen has been notified</div>
+                  <button style={{width:"100%",padding:"13px",background:`linear-gradient(135deg,${c.loganDeep},${c.loganDark})`,color:"white",border:"none",borderRadius:13,fontFamily:"'DM Mono',monospace",fontSize:9,letterSpacing:2.5,textTransform:"uppercase",cursor:"pointer",marginBottom:10}}>📅 add to calendar</button>
+                  <div style={{padding:"12px 14px",background:`rgba(223,221,242,0.3)`,border:`1px dashed rgba(171,161,198,0.4)`,borderRadius:12}}>
+                    <div className="mono" style={{fontSize:8,color:c.textMuted,marginBottom:4}}>want to manage this plan?</div>
+                    <div className="mono" style={{fontSize:9,color:c.loganDeep,cursor:"pointer"}} onClick={()=>setScreen("home")}>download roam →</div>
+                  </div>
+                </div>
+              ):(
+                <div>
+                  <div style={{fontSize:32,marginBottom:8}}>😔</div>
+                  <div className="si" style={{fontSize:20,color:c.text,marginBottom:4}}>maybe next time</div>
+                  <div className="mono" style={{fontSize:9,color:c.textMuted}}>arleen has been notified</div>
+                </div>
+              )}
+            </div>
+          )}
+          {!rsvp&&<div className="mono" style={{fontSize:8,color:c.textMuted,textAlign:"center",lineHeight:1.8}}>no account needed to respond.<br/><span style={{color:c.loganDeep,cursor:"pointer"}} onClick={()=>setScreen("home")}>get roam</span> to create your own plans.</div>}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const NotifsScreen = ({setScreen}) => {
+  const notifs = [
+    {icon:"◎",color:c.greenDot,text:"Tyler accepted MET Museum",time:"2m ago",pill:"accepted",pillBg:c.green,pillC:c.loganDark},
+    {icon:"◈",color:c.pinkDeep,text:"Diya is buying tickets for MET Museum",time:"5m ago",pill:"task",pillBg:c.pink,pillC:c.loganDark},
+    {icon:"◎",color:c.textMuted,text:"Mia hasn't responded to Lucali Pizza",time:"1h ago",pill:"pending",pillBg:c.lavender,pillC:c.loganDark},
+    {icon:"◷",color:c.loganDeep,text:"Prospect Park is in 2 weeks",time:"3h ago",pill:"reminder",pillBg:c.lavender,pillC:c.loganDark},
+    {icon:"★",color:"#F5C842",text:"How was Comedy Cellar?",time:"yesterday",pill:"rate it",pillBg:c.loganDark,pillC:"white"},
+  ];
+  return (
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div style={{padding:"4px 24px 14px",position:"relative",zIndex:2}}>
+        <div className="si" style={{fontSize:26,color:c.text}}>inbox</div>
+        <div className="mono" style={{fontSize:8,color:c.textMuted,letterSpacing:1,marginTop:1}}>3 unread</div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"0 18px 16px",display:"flex",flexDirection:"column",gap:8,position:"relative",zIndex:2}}>
+        {notifs.map((n,i)=>(
+          <div key={i} className={`card fu d${Math.min(i+1,6)}`} style={{padding:"13px 14px",display:"flex",gap:12,alignItems:"flex-start",borderLeft:i<3?`3px solid ${n.color}`:`3px solid transparent`,opacity:i>2?.75:1,cursor:"pointer"}} onClick={()=>setScreen("plandetail")}>
+            <div style={{width:32,height:32,borderRadius:"50%",background:`rgba(223,221,242,0.5)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:14,color:n.color}}>{n.icon}</div>
+            <div style={{flex:1}}>
+              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8,marginBottom:6}}>
+                <div className="li" style={{fontSize:13,color:c.text,lineHeight:1.4}}>{n.text}</div>
+                <span className="mono" style={{fontSize:7.5,color:c.textMuted,flexShrink:0,marginTop:2}}>{n.time}</span>
+              </div>
+              <span className="pill" style={{background:n.pillBg,color:n.pillC}}>{n.pill}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <TabBar screen="notifs" setScreen={setScreen}/>
+    </div>
+  );
+};
+
+const PlansScreen = ({setScreen}) => {
+  const [tab,setTab]=useState("upcoming");
+  const upcoming=[
+    {name:"MET Museum",month:"MAR",day:"14",time:"6:00 pm",who:["T","D","A"],accent:c.lavender,status:"1 pending"},
+    {name:"Lucali Pizza",month:"MAR",day:"20",time:"7:30 pm",who:["A","M"],accent:c.pink,status:"confirmed"},
+    {name:"Prospect Park",month:"MAR",day:"22",time:"2:00 pm",who:["T","D","A","M"],accent:c.lavender,status:"confirmed"},
+  ];
+  const past=[
+    {name:"Joe's Pizza",month:"FEB",day:"28",who:["T","A"],rating:"★★★★★"},
+    {name:"Highline Walk",month:"FEB",day:"21",who:["D","A","M"],rating:"★★★★☆"},
+    {name:"Comedy Cellar",month:"FEB",day:"14",who:["T","D","A"],rating:"★★★★★"},
+  ];
+  const marked=[14,20,22];
+  return (
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div style={{padding:"4px 24px 12px",position:"relative",zIndex:2}}>
+        <div className="si" style={{fontSize:26,color:c.text}}>plans</div>
+        <div className="mono" style={{fontSize:8,color:c.textMuted,letterSpacing:1,marginTop:1}}>march 2026</div>
+      </div>
+      <div style={{margin:"0 18px 14px",display:"flex",background:`rgba(223,221,242,0.4)`,borderRadius:12,padding:3,position:"relative",zIndex:2}}>
+        {["upcoming","past","calendar"].map(t=>(
+          <button key={t} className="tab-seg" onClick={()=>setTab(t)} style={{background:tab===t?c.surface:"none",color:tab===t?c.loganDark:c.textMuted,borderRadius:10,boxShadow:tab===t?"0 1px 6px rgba(74,64,112,0.1)":"none"}}>{t}</button>
+        ))}
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"0 18px 16px",display:"flex",flexDirection:"column",gap:10,position:"relative",zIndex:2}}>
+        {tab==="upcoming"&&upcoming.map((p,i)=>(
+          <div key={i} className={`card fu d${i+1}`} style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12,borderLeft:`3px solid ${p.status==="confirmed"?c.loganDeep:c.pinkDeep}`,cursor:"pointer"}} onClick={()=>setScreen("plandetail")}>
+            <div style={{width:44,height:48,borderRadius:10,background:p.accent,border:`1px solid rgba(171,161,198,0.2)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <div className="mono" style={{fontSize:6.5,color:c.textMid,letterSpacing:1.5,textTransform:"uppercase"}}>{p.month}</div>
+              <div className="s" style={{fontSize:20,color:c.loganDark,lineHeight:1.1}}>{p.day}</div>
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div className="li" style={{fontSize:14,color:c.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</div>
+              <div className="mono" style={{fontSize:8.5,color:c.textMuted,marginTop:2}}>◷ {p.time}</div>
+              <div style={{display:"flex",marginTop:6}}>{p.who.map((l,j)=><Av key={j} l={l} size={20} i={j}/>)}</div>
+            </div>
+            <span className="pill" style={{background:`rgba(223,221,242,0.6)`,color:c.loganDark,flexShrink:0}}>{p.status}</span>
+          </div>
+        ))}
+        {tab==="past"&&past.map((p,i)=>(
+          <div key={i} className={`card fu d${i+1}`} style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12,opacity:.88}}>
+            <div style={{width:44,height:48,borderRadius:10,background:c.lavender,border:`1px solid rgba(171,161,198,0.2)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <div className="mono" style={{fontSize:6.5,color:c.textMid,letterSpacing:1.5,textTransform:"uppercase"}}>{p.month}</div>
+              <div className="s" style={{fontSize:20,color:c.loganDark,lineHeight:1.1}}>{p.day}</div>
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div className="li" style={{fontSize:14,color:c.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</div>
+              <div className="mono" style={{fontSize:11,color:c.loganDeep,marginTop:3}}>{p.rating}</div>
+              <div style={{display:"flex",marginTop:6}}>{p.who.map((l,j)=><Av key={j} l={l} size={20} i={j}/>)}</div>
+            </div>
+          </div>
+        ))}
+        {tab==="calendar"&&(
+          <div className="card fu" style={{padding:"16px"}}>
+            <div className="mono" style={{fontSize:8,color:c.textMuted,letterSpacing:2,textTransform:"uppercase",marginBottom:14,textAlign:"center"}}>march 2026</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:10}}>
+              {["S","M","T","W","T","F","S"].map((d,i)=><div key={i} className="mono" style={{textAlign:"center",fontSize:8,color:c.textMuted,paddingBottom:6}}>{d}</div>)}
+              {Array.from({length:31},(_,i)=>i+1).map((d,i)=>(
+                <div key={i} onClick={()=>marked.includes(d)&&setScreen("plandetail")} style={{aspectRatio:"1",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",background:marked.includes(d)?`linear-gradient(135deg,${c.loganDeep},${c.loganDark})`:"none",cursor:marked.includes(d)?"pointer":"default"}}>
+                  <span className="mono" style={{fontSize:10,color:marked.includes(d)?"white":c.textMid}}>{d}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+      <CommandBar onTap={()=>setScreen("newplan")}/>
+      <TabBar screen="plans" setScreen={setScreen}/>
+    </div>
+  );
+};
+
+const ProfileScreen = ({setScreen}) => (
+  <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <div style={{flex:1,overflowY:"auto",position:"relative",zIndex:2}}>
+      <div style={{margin:"4px 18px 0",borderRadius:20,background:`linear-gradient(140deg,${c.lavender},${c.pink})`,padding:"22px 20px 20px",position:"relative",overflow:"hidden"}}>
+        <DotGrid op={0.18}/>
+        <div style={{position:"relative",zIndex:1,display:"flex",gap:14,alignItems:"center"}}>
+          <div style={{width:58,height:58,borderRadius:"50%",background:`linear-gradient(135deg,${c.loganDeep},${c.loganDark})`,border:"3px solid white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,color:"white",fontFamily:"'DM Serif Display',serif",flexShrink:0}}>A</div>
+          <div>
+            <div className="si" style={{fontSize:20,color:c.text}}>Arleen</div>
+            <div className="mono" style={{fontSize:8,color:c.loganDeep,letterSpacing:1,marginTop:2}}>@arleen · new york</div>
+            <div style={{display:"flex",gap:5,marginTop:8,flexWrap:"wrap"}}>
+              {["🗽 explorer","🍕 foodie","🎭 culture"].map(b=><span key={b} className="pill" style={{background:"rgba(255,255,255,0.65)",color:c.loganDark}}>{b}</span>)}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style={{margin:"12px 18px 0",display:"flex",gap:10}}>
+        {[{val:"14",label:"plans made"},{val:"9",label:"done"},{val:"6",label:"friends"}].map((s,i)=>(
+          <div key={i} className="card" style={{flex:1,padding:"12px 10px",textAlign:"center"}}>
+            <div className="s" style={{fontSize:24,color:c.loganDark}}>{s.val}</div>
+            <div className="mono" style={{fontSize:7.5,color:c.textMuted,letterSpacing:1,textTransform:"uppercase",marginTop:3}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{margin:"14px 18px 16px"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+          <span className="mono" style={{fontSize:7.5,color:c.textMuted,letterSpacing:2,textTransform:"uppercase"}}>friends</span>
+          <span className="mono" style={{fontSize:7.5,color:c.loganDeep,letterSpacing:1}}>add +</span>
+        </div>
+        <div className="card" style={{padding:"4px 14px"}}>
+          {[{l:"T",name:"Tyler",plans:8},{l:"D",name:"Diya",plans:6},{l:"M",name:"Mia",plans:4}].map((f,i,arr)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<arr.length-1?`1px solid rgba(171,161,198,0.12)`:"none"}}>
+              <Av l={f.l} size={34}/>
+              <div style={{flex:1}}>
+                <div className="li" style={{fontSize:14,color:c.text}}>{f.name}</div>
+                <div className="mono" style={{fontSize:8,color:c.textMuted,marginTop:1}}>{f.plans} plans together</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+    <TabBar screen="profile" setScreen={setScreen}/>
+  </div>
+);
+
+const NewPlanScreen = ({setScreen}) => (
+  <div style={{flex:1,display:"flex",flexDirection:"column"}}>
+    <div style={{padding:"4px 24px 12px",display:"flex",alignItems:"center",position:"relative",zIndex:2}}>
+      <button onClick={()=>setScreen("home")} style={{background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Mono',monospace",fontSize:11,color:c.textMuted}}>← back</button>
+      <div style={{flex:1}}/><span className="mono" style={{fontSize:8,color:c.textMuted,letterSpacing:2,textTransform:"uppercase"}}>new plan</span>
+    </div>
+    <div style={{flex:1,overflowY:"auto",padding:"0 18px 12px",display:"flex",flexDirection:"column",gap:12,position:"relative",zIndex:2}}>
+      <div className="fu" style={{display:"flex"}}><div style={{background:c.surface,border:`1px solid rgba(171,161,198,0.25)`,borderRadius:"4px 14px 14px 14px",padding:"10px 14px",fontFamily:"'DM Mono',monospace",fontSize:11,color:c.textMid,lineHeight:1.6,maxWidth:"82%"}}>what are we doing?</div></div>
+      <div className="fu d1" style={{display:"flex",justifyContent:"flex-end"}}><div style={{background:`linear-gradient(135deg,${c.loganDeep},${c.loganDark})`,borderRadius:"14px 14px 4px 14px",padding:"10px 14px",fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:13,color:"white",lineHeight:1.5,maxWidth:"82%",boxShadow:`0 4px 14px rgba(74,64,112,0.22)`}}>i want to go to the MET @ 6pm on 3/14 with @tyler and @diya — @diya buys tickets</div></div>
+      <div className="fu d2" style={{display:"flex"}}><div style={{background:c.surface,border:`1px solid rgba(171,161,198,0.25)`,borderRadius:"4px 14px 14px 14px",padding:"10px 14px",fontFamily:"'DM Mono',monospace",fontSize:11,color:c.textMid,lineHeight:1.6,maxWidth:"82%"}}>got it, parsing...</div></div>
+      <div className="fu d3 card" style={{padding:"16px",background:`linear-gradient(145deg,rgba(223,221,242,0.6),rgba(250,220,228,0.35))`,borderRadius:16,maxWidth:"88%"}}>
+        <div className="mono" style={{fontSize:7,color:c.textMuted,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>◈ parsed</div>
+        <div className="si" style={{fontSize:20,color:c.text,marginBottom:12}}>MET Museum</div>
+        {[["when","fri mar 14 · 6:00 pm"],["with","@tyler  @diya"],["task","@diya → tickets"]].map(([k,v])=>(
+          <div key={k} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:`1px solid rgba(171,161,198,0.12)`}}>
+            <span className="mono" style={{fontSize:9,color:c.textMuted,letterSpacing:1}}>{k}</span>
+            <span className="mono" style={{fontSize:9.5,color:c.loganDark}}>{v}</span>
+          </div>
+        ))}
+        <div style={{display:"flex",gap:8,marginTop:14}}>
+          <button className="btn-main" style={{flex:1,padding:"11px 0",borderRadius:12,fontSize:9}} onClick={()=>setScreen("plandetail")}>send invites →</button>
+          <button className="btn-ghost">edit</button>
+        </div>
+      </div>
+    </div>
+    <div style={{padding:"8px 18px 12px",borderTop:`1px solid rgba(171,161,198,0.16)`,background:`rgba(245,243,250,0.96)`,backdropFilter:"blur(16px)",position:"relative",zIndex:3}}>
+      <div style={{display:"flex",gap:8,alignItems:"center",background:c.surface,border:`1px solid rgba(171,161,198,0.28)`,borderRadius:22,padding:"8px 10px 8px 16px"}}>
+        <input readOnly placeholder="say more or edit..." style={{flex:1,background:"none",border:"none",fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:12.5,color:c.textMid}}/>
+        <div style={{width:32,height:32,background:`linear-gradient(135deg,${c.loganDeep},${c.loganDark})`,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}>
+          <span style={{color:"white",fontSize:13}}>↑</span>
+        </div>
+      </div>
+    </div>
+    <TabBar screen="home" setScreen={setScreen}/>
+  </div>
+);
+
+const screenLabels = {
+  home:"01 — home",plans:"02 — plans",notifs:"03 — inbox",
+  profile:"04 — profile",newplan:"05 — new plan",
+  plandetail:"06 — manage plan  ·  try removing @meow →",
+  webinvite:"07 — web invite  ·  try tapping i'm in →"
+};
+
+function App() {
+  const [screen,setScreen] = useState("home");
+  const isWeb = screen==="webinvite";
+  return (
+    <>
+      <style>{css}</style>
+      <div style={{minHeight:"100vh",background:`radial-gradient(ellipse at 25% 15%,rgba(223,221,242,0.7) 0%,transparent 50%),radial-gradient(ellipse at 75% 85%,rgba(250,220,228,0.45) 0%,transparent 50%),#F5F3FA`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 20px"}}>
+        <div style={{marginBottom:20,textAlign:"center"}}>
+          <div className="si" style={{fontSize:30,color:c.text}}>roam</div>
+          <div className="mono" style={{fontSize:7.5,color:c.textMuted,letterSpacing:4,textTransform:"uppercase",marginTop:3}}>mvp wireframe · spring 2026</div>
+        </div>
+
+        <div className="mono" style={{fontSize:8,color:c.loganDeep,letterSpacing:2,textTransform:"uppercase",marginBottom:12,textAlign:"center"}}>{screenLabels[screen]||screen}</div>
+
+        <div style={{width:375,height:790,background:"#F5F3FA",borderRadius:isWeb?24:50,overflow:"hidden",boxShadow:"0 50px 120px rgba(42,37,53,0.2),0 20px 40px rgba(42,37,53,0.08),inset 0 0 0 1px rgba(255,255,255,0.75)",position:"relative",display:"flex",flexDirection:"column"}}>
+          <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse at 20% 8%,rgba(223,221,242,0.9) 0%,transparent 45%),radial-gradient(ellipse at 80% 92%,rgba(250,220,228,0.55) 0%,transparent 40%)`}}/>
+          <DotGrid op={0.22}/>
+          <div style={{position:"relative",zIndex:2,display:"flex",flexDirection:"column",height:"100%"}}>
+            {!isWeb&&<StatusBar/>}
+            <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+              {screen==="home"      &&<HomeScreen       setScreen={setScreen}/>}
+              {screen==="plans"     &&<PlansScreen      setScreen={setScreen}/>}
+              {screen==="notifs"    &&<NotifsScreen     setScreen={setScreen}/>}
+              {screen==="profile"   &&<ProfileScreen    setScreen={setScreen}/>}
+              {screen==="newplan"   &&<NewPlanScreen    setScreen={setScreen}/>}
+              {screen==="plandetail"&&<PlanDetailScreen setScreen={setScreen}/>}
+              {screen==="webinvite" &&<WebInvitePage    setScreen={setScreen}/>}
+            </div>
+          </div>
+        </div>
+
+        <div style={{marginTop:20,display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center",maxWidth:420}}>
+          {[{id:"home",label:"home"},{id:"plans",label:"plans"},{id:"notifs",label:"inbox"},{id:"profile",label:"profile"},{id:"plandetail",label:"manage plan"},{id:"webinvite",label:"web invite ↗"}].map(s=>(
+            <button key={s.id} className="navbtn" onClick={()=>setScreen(s.id)} style={{color:screen===s.id?c.loganDark:c.textMuted,borderBottom:screen===s.id?`1.5px solid ${c.loganDark}`:"1px solid transparent"}}>{s.label}</button>
+          ))}
+        </div>
+
+        <div className="mono" style={{marginTop:16,fontSize:7,color:c.textMuted,letterSpacing:1.5,textTransform:"uppercase",textAlign:"center",lineHeight:2}}>
+          roam · mvp wireframe · spring 2026<br/>
+          react native + expo · supabase · claude api · twilio
+        </div>
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
